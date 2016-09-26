@@ -20,7 +20,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
-    enum switchFlag: unsigned char
+    enum SwitchFlag: unsigned char
     {
         ///标志位表示仅有一路开关打开，其他关闭
         ///例如：需要打开1路控制阀，则 &= flag1
@@ -39,8 +39,6 @@ private:
     void showStatusMessage(const QString &message);
 
     //解析数据
-    void analysisData_1(const QByteArray &data);
-    void analysisData_2(const QByteArray &data);
     void analysisData_X(const QByteArray &data);
     void analysisData_Y(const QByteArray &data);
     //发送控制信息
@@ -48,7 +46,10 @@ private:
 
     inline void changeSwitchState(unsigned char &szSwitch, int num, int state);
 
-	//double calCommand(double x, double y, );
+    //初始化串口//
+    void initSerialPort();
+    //初始化定时器//
+    void initTimer();
 
 private slots:
     //不作串口区分
@@ -56,11 +57,11 @@ private slots:
     void closeSerialPort();
 
     //区分不同串口
-    void openSerialPort_1();
-    void readData_1();
+    void openSerialPort_gyroscope();
+    void readData_gyroscope();
 
-    void openSerialPort_2();
-    void readData_2();
+    void openSerialPort_control();
+    void readData_control();
 
     void openSerialPort_X();
     void readData_X();
@@ -71,41 +72,45 @@ private slots:
     //发送激光控制指令
     void sendControlCommand();
 
-    //启动定时器//
-    void startSendCommand();
+    void timeout_delayTimer1();
+    void timeout_delayTimer2();
+    void timeout_delayTimer3();
 
-    //停止定时器//
-    void stopSendCommand();
-
-    void timeout();
-
+    //启动延迟定时器1//
+    void startDelayTime1(int ms);
+    //启动延迟定时器2//
+    void startDelayTime2(int ms);
+    //启动延迟定时器3//
+    void startDelayTime3(int ms);
 
 private:
     Ui::MainWindow *ui;
 
-    //串口1:陀螺仪
-    QSerialPort *m_pSerialPort_1;
-    SettingsWidget *m_pSettingsWidget_1;
+    //陀螺仪//
+    QSerialPort *m_pSerialPort_gyroscope;
+    SettingsWidget *m_pSettingsWidget_gyroscope;
     bool m_bUpdatedAngle;
 
-    //串口2:控制器
-    QSerialPort *m_pSerialPort_2;
-    SettingsWidget *m_pSettingsWidget_2;
+    //控制器//
+    QSerialPort *m_pSerialPort_control;
+    SettingsWidget *m_pSettingsWidget_control;
 
-    //激光阵列:X
+    //激光阵列:X//
     QSerialPort *m_pSerialPort_X;
     SettingsWidget *m_pSettingsWidget_X;
     int m_flagArrayX[12];
     bool m_bUpdatedX;
 
-    //激光阵列:Y
+    //激光阵列:Y//
     QSerialPort *m_pSerialPort_Y;
     SettingsWidget *m_pSettingsWidget_Y;
     int m_flagArrayY[12];
     bool m_bUpdatedY;
 
     QLabel *m_pLabelStatus;
-    QTimer *m_pTimer;
+    QTimer *m_pTimer_delay1; //第一次延时控制//
+    QTimer *m_pTimer_delay2; //第二次延时控制//
+    QTimer *m_pTimer_delay3; //第三次延时控制//
 };
 
 #endif // MAINWINDOW_H

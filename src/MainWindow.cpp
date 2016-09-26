@@ -12,78 +12,30 @@
 MainWindow::MainWindow(QWidget *parent) :
 QMainWindow(parent),
 	ui(new Ui::MainWindow),
-	m_pSerialPort_1(NULL),
-	m_pSettingsWidget_1(NULL),
-	m_pSerialPort_2(NULL),
-	m_pSettingsWidget_2(NULL),
+    m_pSerialPort_gyroscope(NULL),
+    m_pSettingsWidget_gyroscope(NULL),
+    m_pSerialPort_control(NULL),
+    m_pSettingsWidget_control(NULL),
 	m_pLabelStatus(NULL),
 	m_bUpdatedX(false),
 	m_bUpdatedY(false),
-	m_bUpdatedAngle(false),
-	m_pTimer(NULL)
+    m_bUpdatedAngle(false),
+    m_pTimer_delay1(NULL),
+    m_pTimer_delay2(NULL),
+    m_pTimer_delay3(NULL)
 {
 	ui->setupUi(this);
 
+    //信息提示//
 	m_pLabelStatus = new QLabel;
 	ui->statusBar->addWidget(m_pLabelStatus);
 
-	//串口1
-	m_pSerialPort_1 = new QSerialPort(this);
-	connect(m_pSerialPort_1, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
-		this, &MainWindow::handleError);
-	connect(m_pSerialPort_1, &QSerialPort::readyRead, this, &MainWindow::readData_1);
+    //初始化串口//
+    initSerialPort();
+    //初始化定时器//
+    initTimer();
 
-	m_pSettingsWidget_1 = new SettingsWidget;
-	connect(m_pSettingsWidget_1, SIGNAL(openSerialPort()), SLOT(openSerialPort_1()));
-	connect(m_pSettingsWidget_1, SIGNAL(closeSerialPort()),SLOT(closeSerialPort()));
-	QHBoxLayout *pHLayout_1 = new QHBoxLayout(ui->groupBox_1);
-	pHLayout_1->addWidget(m_pSettingsWidget_1);
-
-	//串口2
-	m_pSerialPort_2 = new QSerialPort(this);
-	connect(m_pSerialPort_2, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
-		this, &MainWindow::handleError);
-	connect(m_pSerialPort_2, &QSerialPort::readyRead, this, &MainWindow::readData_2);
-
-	m_pSettingsWidget_2 = new SettingsWidget;
-	connect(m_pSettingsWidget_2, SIGNAL(openSerialPort()), SLOT(openSerialPort_2()));
-	connect(m_pSettingsWidget_2, SIGNAL(closeSerialPort()),SLOT(closeSerialPort()));
-	QHBoxLayout *pHLayout_2 = new QHBoxLayout(ui->groupBox_2);
-	pHLayout_2->addWidget(m_pSettingsWidget_2);
-
-	//激光阵列X
-	m_pSerialPort_X = new QSerialPort(this);
-	connect(m_pSerialPort_X, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
-		this, &MainWindow::handleError);
-	connect(m_pSerialPort_X, &QSerialPort::readyRead, this, &MainWindow::readData_X);
-
-	m_pSettingsWidget_X = new SettingsWidget;
-	connect(m_pSettingsWidget_X, SIGNAL(openSerialPort()), SLOT(openSerialPort_X()));
-	connect(m_pSettingsWidget_X, SIGNAL(closeSerialPort()),SLOT(closeSerialPort()));
-	QHBoxLayout *pHLayout_X = new QHBoxLayout(ui->groupBox_3);
-	pHLayout_X->addWidget(m_pSettingsWidget_X);
-
-	//激光阵列Y
-	m_pSerialPort_Y = new QSerialPort(this);
-	connect(m_pSerialPort_Y, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
-		this, &MainWindow::handleError);
-	connect(m_pSerialPort_Y, &QSerialPort::readyRead, this, &MainWindow::readData_Y);
-
-	m_pSettingsWidget_Y = new SettingsWidget;
-	connect(m_pSettingsWidget_Y, SIGNAL(openSerialPort()), SLOT(openSerialPort_Y()));
-	connect(m_pSettingsWidget_Y, SIGNAL(closeSerialPort()),SLOT(closeSerialPort()));
-	QHBoxLayout *pHLayout_Y = new QHBoxLayout(ui->groupBox_4);
-	pHLayout_Y->addWidget(m_pSettingsWidget_Y);
-
-
-	m_pTimer = new QTimer(this);
-	connect(m_pTimer, SIGNAL(timeout()), this, SLOT(timeout()));
-
-	ui->pushButton_control->setEnabled(true);
-	ui->pushButton_control_stop->setEnabled(false);
-
-	connect(ui->pushButton_control, SIGNAL(clicked()), this, SLOT(startSendCommand()));
-	connect(ui->pushButton_control_stop, SIGNAL(clicked()), this, SLOT(stopSendCommand()));
+    connect(ui->pushButton_control, SIGNAL(clicked(bool)), this, SLOT(sendControlCommand()));
 }
 
 MainWindow::~MainWindow()
@@ -115,31 +67,31 @@ void MainWindow::closeSerialPort()
 	showStatusMessage(tr("Disconnected"));
 }
 
-void MainWindow::openSerialPort_1()
+void MainWindow::openSerialPort_gyroscope()
 {
-	SettingsWidget::Settings p = m_pSettingsWidget_1->settings();
-	m_pSerialPort_1->setPortName(p.name);
-	m_pSerialPort_1->setBaudRate(p.baudRate);
-	m_pSerialPort_1->setDataBits(p.dataBits);
-	m_pSerialPort_1->setParity(p.parity);
-	m_pSerialPort_1->setStopBits(p.stopBits);
-	m_pSerialPort_1->setFlowControl(p.flowControl);
-	if (m_pSerialPort_1->open(QIODevice::ReadWrite)) {
+    SettingsWidget::Settings p = m_pSettingsWidget_gyroscope->settings();
+    m_pSerialPort_gyroscope->setPortName(p.name);
+    m_pSerialPort_gyroscope->setBaudRate(p.baudRate);
+    m_pSerialPort_gyroscope->setDataBits(p.dataBits);
+    m_pSerialPort_gyroscope->setParity(p.parity);
+    m_pSerialPort_gyroscope->setStopBits(p.stopBits);
+    m_pSerialPort_gyroscope->setFlowControl(p.flowControl);
+    if (m_pSerialPort_gyroscope->open(QIODevice::ReadWrite)) {
 		showStatusMessage(tr("Connected to %1 : %2, %3, %4, %5, %6")
 			.arg(p.name).arg(p.stringBaudRate).arg(p.stringDataBits)
 			.arg(p.stringParity).arg(p.stringStopBits).arg(p.stringFlowControl));
 	} else {
-		QMessageBox::critical(this, tr("Error"), m_pSerialPort_1->errorString());
+        QMessageBox::critical(this, tr("Error"), m_pSerialPort_gyroscope->errorString());
 		showStatusMessage(tr("Open error"));
 	}
 }
 
-void MainWindow::readData_1()
+void MainWindow::readData_gyroscope()
 {
     static QByteArray byteArray;
-    byteArray += m_pSerialPort_1->readAll();
+    byteArray += m_pSerialPort_gyroscope->readAll();
 
-    static char szBeginFlag[] = {0x88, 0xAF, 0x1C, 0x00};
+    static const char szBeginFlag[4] = {0x88, 0xAF, 0x1C, 0x00};
     int index = byteArray.indexOf(szBeginFlag, 0);
 
     if(index != -1 && byteArray.size() >= 32 + index)
@@ -152,8 +104,6 @@ void MainWindow::readData_1()
         //提取//
 
         //角速度//
-		char temp_1 = 0;
-		char temp_2 = 0;
         int16_t gyroscope = 0;
 		memcpy(&gyroscope, szData + 13, sizeof(int16_t));
 		gyroscope = ((gyroscope & 0x00FF) << 8) | ((gyroscope & 0xFF00) >> 8);
@@ -163,10 +113,7 @@ void MainWindow::readData_1()
 		memcpy(&temperature, szData + 25, sizeof(int16_t));
 		temperature = ((temperature & 0x00FF) << 8) | ((temperature & 0xFF00) >> 8);
 
-		m_bUpdatedAngle = true;
-
         ui->doubleSpinBox_1->setValue(gyroscope);
-
 
 		ui->doubleSpinBox_2->setValue(temperature);
 		m_bUpdatedAngle = true;
@@ -181,30 +128,30 @@ void MainWindow::readData_1()
     }
 }
 
-void MainWindow::openSerialPort_2()
+void MainWindow::openSerialPort_control()
 {
-	SettingsWidget::Settings p = m_pSettingsWidget_2->settings();
-	m_pSerialPort_2->setPortName(p.name);
-	m_pSerialPort_2->setBaudRate(p.baudRate);
-	m_pSerialPort_2->setDataBits(p.dataBits);
-	m_pSerialPort_2->setParity(p.parity);
-	m_pSerialPort_2->setStopBits(p.stopBits);
-	m_pSerialPort_2->setFlowControl(p.flowControl);
-	if (m_pSerialPort_2->open(QIODevice::ReadWrite)) {
+    SettingsWidget::Settings p = m_pSettingsWidget_control->settings();
+    m_pSerialPort_control->setPortName(p.name);
+    m_pSerialPort_control->setBaudRate(p.baudRate);
+    m_pSerialPort_control->setDataBits(p.dataBits);
+    m_pSerialPort_control->setParity(p.parity);
+    m_pSerialPort_control->setStopBits(p.stopBits);
+    m_pSerialPort_control->setFlowControl(p.flowControl);
+    if (m_pSerialPort_control->open(QIODevice::ReadWrite)) {
 		showStatusMessage(tr("Connected to %1 : %2, %3, %4, %5, %6")
 			.arg(p.name).arg(p.stringBaudRate).arg(p.stringDataBits)
 			.arg(p.stringParity).arg(p.stringStopBits).arg(p.stringFlowControl));
 	} else {
-		QMessageBox::critical(this, tr("Error"), m_pSerialPort_2->errorString());
+        QMessageBox::critical(this, tr("Error"), m_pSerialPort_control->errorString());
 
 		showStatusMessage(tr("Open error"));
 	}
 }
 
-void MainWindow::readData_2()
+void MainWindow::readData_control()
 {
-	QByteArray data = m_pSerialPort_2->readAll();
-	analysisData_2(data);
+    QByteArray data = m_pSerialPort_control->readAll();
+    qDebug() << __FILE__ << __LINE__ << "\trecv:\t" << data;
 }
 
 void MainWindow::openSerialPort_X()
@@ -273,32 +220,67 @@ void MainWindow::sendControlCommand()
 	}
 }
 
-void MainWindow::startSendCommand()
+void MainWindow::timeout_delayTimer1()
 {
-	if(m_pTimer != NULL)
-	{
-		m_pTimer->stop();
-		m_pTimer->start(ui->spinBox->value());
-	}
+    if(m_pTimer_delay1 != NULL)
+    {
+        m_pTimer_delay1->stop();
+    }
+    //发送命令//
 
-	ui->pushButton_control->setEnabled(false);
-	ui->pushButton_control_stop->setEnabled(true);
+    //计算延时//
+    int ms = 0;
+    startDelayTime2(ms);
 }
 
-void MainWindow::stopSendCommand()
+void MainWindow::timeout_delayTimer2()
 {
-	if(m_pTimer != NULL)
-	{
-		m_pTimer->stop();
-	}
+    if(m_pTimer_delay2 != NULL)
+    {
+        m_pTimer_delay2->stop();
+    }
+    //发送命令//
 
-	ui->pushButton_control->setEnabled(true);
-	ui->pushButton_control_stop->setEnabled(false);
+    //计算延时//
+    int ms = 0;
+    startDelayTime3(ms);
 }
 
-void MainWindow::timeout()
+void MainWindow::timeout_delayTimer3()
 {
-	sendControlCommand();
+    if(m_pTimer_delay3 != NULL)
+    {
+        m_pTimer_delay3->stop();
+    }
+    //发送命令//
+    if(ui->radioButton->isChecked())
+    {
+        sendControlCommand();
+    }
+}
+
+void MainWindow::startDelayTime1(int ms)
+{
+    if(m_pTimer_delay1 != NULL)
+    {
+        m_pTimer_delay1->start(ms);
+    }
+}
+
+void MainWindow::startDelayTime2(int ms)
+{
+    if(m_pTimer_delay2 != NULL)
+    {
+        m_pTimer_delay2->start(ms);
+    }
+}
+
+void MainWindow::startDelayTime3(int ms)
+{
+    if(m_pTimer_delay3 != NULL)
+    {
+        m_pTimer_delay3->start(ms);
+    }
 }
 
 void MainWindow::showStatusMessage(const QString &message)
@@ -306,23 +288,8 @@ void MainWindow::showStatusMessage(const QString &message)
 	m_pLabelStatus->setText(message);
 }
 
-void MainWindow::analysisData_1(const QByteArray &byteArray)
-{
-	//开始标识位
-	static const unsigned char c_szBeginFlag = 0x80;
-	//查找开始标识位
-
-}
-
-void MainWindow::analysisData_2(const QByteArray &data)
-{
-	Q_UNUSED(data);
-	//qDebug() << "control" << data;
-}
-
 void MainWindow::analysisData_X(const QByteArray &data)
 {
-	//qDebug() << "X:" << data;
 	memset(m_flagArrayX, 0, 12);
 
 	//开始标识位
@@ -336,9 +303,6 @@ void MainWindow::analysisData_X(const QByteArray &data)
 		//提取4个字节
 		unsigned char szData[4] = {};
 		memcpy(szData, byteArray.mid(index, 4).data(), sizeof(szData));
-
-		//
-		//for(int i = 0; i < sizeof(flagArray); ++i)
 		{
 			m_flagArrayX[0] = szData[2] & 1;
 			m_flagArrayX[1] = szData[2] >> 1 & 1;
@@ -376,9 +340,6 @@ void MainWindow::analysisData_Y(const QByteArray &data)
 		//提取4个字节
 		unsigned char szData[4] = {};
 		memcpy(szData, byteArray.mid(index, 4).data(), sizeof(szData));
-
-		//
-		//for(int i = 0; i < sizeof(flagArray); ++i)
 		{
 			m_flagArrayY[0] = szData[2] & 1;
 			m_flagArrayY[1] = szData[2] >> 1 & 1;
@@ -404,7 +365,6 @@ void MainWindow::analysisData_Y(const QByteArray &data)
 
 void MainWindow::controlInfo()
 {
-	qDebug() << "control";
 	if(m_bUpdatedX && m_bUpdatedY/* && m_bUpdatedAngle*/)
 	{
 		//求X, Y坐标
@@ -453,7 +413,7 @@ void MainWindow::controlInfo()
 		//调用函数设置控制阀的开关
 		//changeSwitchState(sz1_6, 1, 0);
 		//changeSwitchState(sz13_18, 13, 0);
-		ui->spinBox->setValue(time);
+        //ui->spinBox->setValue(time);
 		//控制算法
 		double omega = 0.061*ui->doubleSpinBox_1->value();
 		double angle = 0.1*ui->doubleSpinBox_2->value();
@@ -475,22 +435,7 @@ void MainWindow::controlInfo()
 		else if(t3<0){Zpush[2]=1,Zpush[4]=1;Zpush[6]=1,Zpush[8]=1;t3=-t3;}
 		else {Zpush[1]=1;Zpush[3]=1;Zpush[5]=1;Zpush[7]=1;}
 
-		//算法结束
-
-		startSendCommand();
-		double value_1 = t1;
-		ui->spinBox_2->setValue(value_1);
-		Sleep(value_1);
-
-		startSendCommand();
-		double value_2 = t2;
-		ui->spinBox_3->setValue(value_2);
-		Sleep(value_2);
-
-		startSendCommand();
-		double value_3 = t3;
-		ui->spinBox_4->setValue(value_3);
-		Sleep(value_3);
+        //算法结束
 
 		//组装数据
 		QByteArray szData;
@@ -501,14 +446,14 @@ void MainWindow::controlInfo()
 		szData.push_back(sz19_24);
 		szData.push_back(c_szEndFlag);
 
-		if(m_pSerialPort_2 && m_pSerialPort_2->isOpen())
+        if(m_pSerialPort_control && m_pSerialPort_control->isOpen())
 		{
-			m_pSerialPort_2->write(szData);
+            m_pSerialPort_control->write(szData);
 		}
 
 		m_bUpdatedX = false;
 		m_bUpdatedY = false;
-		m_bUpdatedAngle = true;
+        m_bUpdatedAngle = false;
 	}
 }
 
@@ -554,7 +499,70 @@ void MainWindow::changeSwitchState(unsigned char &szSwitch, int num, int state)
 	else
 	{
 		Q_ASSERT(false);
-	}
+    }
+}
+
+void MainWindow::initSerialPort()
+{
+    //陀螺仪//
+    m_pSerialPort_gyroscope = new QSerialPort(this);
+    connect(m_pSerialPort_gyroscope, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
+        this, &MainWindow::handleError);
+    connect(m_pSerialPort_gyroscope, &QSerialPort::readyRead, this, &MainWindow::readData_gyroscope);
+
+    m_pSettingsWidget_gyroscope = new SettingsWidget;
+    connect(m_pSettingsWidget_gyroscope, SIGNAL(openSerialPort()), SLOT(openSerialPort_gyroscope()));
+    connect(m_pSettingsWidget_gyroscope, SIGNAL(closeSerialPort()),SLOT(closeSerialPort()));
+    QHBoxLayout *pHLayout_1 = new QHBoxLayout(ui->groupBox_1);
+    pHLayout_1->addWidget(m_pSettingsWidget_gyroscope);
+
+    //控制器//
+    m_pSerialPort_control = new QSerialPort(this);
+    connect(m_pSerialPort_control, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
+        this, &MainWindow::handleError);
+    connect(m_pSerialPort_control, &QSerialPort::readyRead, this, &MainWindow::readData_control);
+
+    m_pSettingsWidget_control = new SettingsWidget;
+    connect(m_pSettingsWidget_control, SIGNAL(openSerialPort()), SLOT(openSerialPort_control()));
+    connect(m_pSettingsWidget_control, SIGNAL(closeSerialPort()),SLOT(closeSerialPort()));
+    QHBoxLayout *pHLayout_2 = new QHBoxLayout(ui->groupBox_2);
+    pHLayout_2->addWidget(m_pSettingsWidget_control);
+
+    //激光阵列X
+    m_pSerialPort_X = new QSerialPort(this);
+    connect(m_pSerialPort_X, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
+        this, &MainWindow::handleError);
+    connect(m_pSerialPort_X, &QSerialPort::readyRead, this, &MainWindow::readData_X);
+
+    m_pSettingsWidget_X = new SettingsWidget;
+    connect(m_pSettingsWidget_X, SIGNAL(openSerialPort()), SLOT(openSerialPort_X()));
+    connect(m_pSettingsWidget_X, SIGNAL(closeSerialPort()),SLOT(closeSerialPort()));
+    QHBoxLayout *pHLayout_X = new QHBoxLayout(ui->groupBox_3);
+    pHLayout_X->addWidget(m_pSettingsWidget_X);
+
+    //激光阵列Y
+    m_pSerialPort_Y = new QSerialPort(this);
+    connect(m_pSerialPort_Y, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
+        this, &MainWindow::handleError);
+    connect(m_pSerialPort_Y, &QSerialPort::readyRead, this, &MainWindow::readData_Y);
+
+    m_pSettingsWidget_Y = new SettingsWidget;
+    connect(m_pSettingsWidget_Y, SIGNAL(openSerialPort()), SLOT(openSerialPort_Y()));
+    connect(m_pSettingsWidget_Y, SIGNAL(closeSerialPort()),SLOT(closeSerialPort()));
+    QHBoxLayout *pHLayout_Y = new QHBoxLayout(ui->groupBox_4);
+    pHLayout_Y->addWidget(m_pSettingsWidget_Y);
+}
+
+void MainWindow::initTimer()
+{
+    m_pTimer_delay1 = new QTimer(this);
+    connect(m_pTimer_delay1, SIGNAL(timeout()), this, SLOT(timeout_delayTimer1()));
+
+    m_pTimer_delay2 = new QTimer(this);
+    connect(m_pTimer_delay2, SIGNAL(timeout()), this, SLOT(timeout_delayTimer2()));
+
+    m_pTimer_delay3 = new QTimer(this);
+    connect(m_pTimer_delay3, SIGNAL(timeout()), this, SLOT(timeout_delayTimer3()));
 }
 
 

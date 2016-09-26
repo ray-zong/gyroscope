@@ -151,8 +151,8 @@
    <widget class="QPushButton" name="pushButton_control">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>510</y>
+      <x>50</x>
+      <y>550</y>
       <width>128</width>
       <height>23</height>
      </rect>
@@ -160,58 +160,6 @@
     <property name="text">
      <string>启动激光阵列控制指令</string>
     </property>
-   </widget>
-   <widget class="QPushButton" name="pushButton_control_stop">
-    <property name="geometry">
-     <rect>
-      <x>40</x>
-      <y>550</y>
-      <width>128</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>终止激光阵列控制指令</string>
-    </property>
-   </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>470</y>
-      <width>150</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QLabel" name="label_3">
-       <property name="text">
-        <string>发送间隔：</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QSpinBox" name="spinBox">
-       <property name="buttonSymbols">
-        <enum>QAbstractSpinBox::NoButtons</enum>
-       </property>
-       <property name="minimum">
-        <number>10</number>
-       </property>
-       <property name="maximum">
-        <number>100000</number>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_4">
-       <property name="text">
-        <string>ms</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
    </widget>
    <widget class="QLabel" name="label_5">
     <property name="geometry">
@@ -302,136 +250,101 @@
    <widget class="QLabel" name="label_8">
     <property name="geometry">
      <rect>
-      <x>193</x>
+      <x>190</x>
       <y>470</y>
-      <width>91</width>
-      <height>20</height>
+      <width>120</width>
+      <height>12</height>
      </rect>
     </property>
     <property name="text">
-     <string>第一次延时时间：</string>
-    </property>
-   </widget>
-   <widget class="QSpinBox" name="spinBox_2">
-    <property name="geometry">
-     <rect>
-      <x>300</x>
-      <y>470</y>
-      <width>64</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="buttonSymbols">
-     <enum>QAbstractSpinBox::NoButtons</enum>
-    </property>
-    <property name="minimum">
-     <number>10</number>
-    </property>
-    <property name="maximum">
-     <number>100000</number>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_9">
-    <property name="geometry">
-     <rect>
-      <x>380</x>
-      <y>470</y>
-      <width>12</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>ms</string>
-    </property>
-   </widget>
-   <widget class="QSpinBox" name="spinBox_3">
-    <property name="geometry">
-     <rect>
-      <x>300</x>
-      <y>510</y>
-      <width>64</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="buttonSymbols">
-     <enum>QAbstractSpinBox::NoButtons</enum>
-    </property>
-    <property name="minimum">
-     <number>10</number>
-    </property>
-    <property name="maximum">
-     <number>100000</number>
+     <string>第一次延时时间系数：</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_10">
     <property name="geometry">
      <rect>
-      <x>193</x>
+      <x>190</x>
       <y>510</y>
-      <width>91</width>
-      <height>20</height>
+      <width>120</width>
+      <height>12</height>
      </rect>
     </property>
     <property name="text">
-     <string>第二次延时时间：</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_11">
-    <property name="geometry">
-     <rect>
-      <x>380</x>
-      <y>510</y>
-      <width>12</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>ms</string>
-    </property>
-   </widget>
-   <widget class="QSpinBox" name="spinBox_4">
-    <property name="geometry">
-     <rect>
-      <x>300</x>
-      <y>550</y>
-      <width>64</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="buttonSymbols">
-     <enum>QAbstractSpinBox::NoButtons</enum>
-    </property>
-    <property name="minimum">
-     <number>10</number>
-    </property>
-    <property name="maximum">
-     <number>100000</number>
+     <string>第二次延时时间系数：</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_12">
     <property name="geometry">
      <rect>
-      <x>193</x>
+      <x>190</x>
       <y>550</y>
-      <width>91</width>
-      <height>20</height>
+      <width>120</width>
+      <height>12</height>
      </rect>
     </property>
     <property name="text">
-     <string>第三次延时时间：</string>
+     <string>第三次延时时间系数：</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_13">
+   <widget class="QDoubleSpinBox" name="doubleSpinBox">
     <property name="geometry">
      <rect>
-      <x>380</x>
+      <x>310</x>
+      <y>460</y>
+      <width>62</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="buttonSymbols">
+     <enum>QAbstractSpinBox::NoButtons</enum>
+    </property>
+    <property name="decimals">
+     <number>6</number>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>510</y>
+      <width>62</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="buttonSymbols">
+     <enum>QAbstractSpinBox::NoButtons</enum>
+    </property>
+    <property name="decimals">
+     <number>6</number>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="doubleSpinBox_4">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
       <y>550</y>
-      <width>12</width>
-      <height>20</height>
+      <width>62</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="buttonSymbols">
+     <enum>QAbstractSpinBox::NoButtons</enum>
+    </property>
+    <property name="decimals">
+     <number>6</number>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="radioButton">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>520</y>
+      <width>89</width>
+      <height>16</height>
      </rect>
     </property>
     <property name="text">
-     <string>ms</string>
+     <string>循环发送</string>
     </property>
    </widget>
   </widget>
